@@ -1,6 +1,7 @@
-import puppeteer from 'puppeteer';
+import chromium from 'chrome-aws-lambda';
+import puppeteer from 'puppeteer-core';
 import * as cheerio from 'cheerio';
-import { createClient } from '../../utils/supabase/server';
+import { createClient } from '../../utils/supabase/client';
 
 // 무한 스크롤 함수 (로드된 항목이 100개가 될 때까지 스크롤)
 async function autoScroll(page) {
@@ -123,12 +124,19 @@ async function upsertActivity(activity) {
 
 // 메인 크롤링 함수
 export async function crawlActivities() {
-  const browser = await puppeteer.launch({ headless: false });
-  const page = await browser.newPage();
-
-  const detailUrls = [];
+  let browser = null;
 
   try {
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
+    });
+
+    const page = await browser.newPage();
+    const detailUrls = [];
+
     await page.goto('https://www.campuspick.com/activity', {
       waitUntil: 'networkidle2',
     });
@@ -170,9 +178,8 @@ export async function crawlActivities() {
   } catch (error) {
     console.error('크롤링 중 오류 발생:', error);
   } finally {
-    await browser.close();
+    if (browser !== null) {
+      await browser.close();
+    }
   }
 }
-
-// 크롤링 함수 실행
-crawlActivities();
