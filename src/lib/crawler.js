@@ -1,4 +1,5 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chrome from 'chrome-aws-lambda';
 import * as cheerio from 'cheerio';
 import { createClient } from '../../utils/supabase/server';
 
@@ -123,9 +124,17 @@ async function upsertActivity(activity) {
 
 // 메인 크롤링 함수
 export async function crawlActivities() {
-  const browser = await puppeteer.launch({ headless: false });
-  const page = await browser.newPage();
+  // chrome-aws-lambda를 사용하여 크롬 브라우저를 실행
+  const executablePath = await chrome.executablePath;
 
+  const browser = await puppeteer.launch({
+    args: chrome.args,
+    executablePath: executablePath || undefined, // 경로 설정 (로컬 환경에서는 undefined, AWS Lambda에서는 chrome-aws-lambda 경로)
+    headless: true, // headless 모드로 실행
+    ignoreHTTPSErrors: true,
+  });
+
+  const page = await browser.newPage();
   const detailUrls = [];
 
   try {
