@@ -2,8 +2,6 @@ import puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
 import { createClient } from '../../utils/supabase/server';
 
-const supabase = createClient();
-
 // 무한 스크롤 함수 (로드된 항목이 100개가 될 때까지 스크롤)
 async function autoScroll(page) {
   await page.evaluate(async () => {
@@ -80,6 +78,7 @@ async function fetchDetails(page, url) {
 
 // 기존 데이터 조회 함수
 async function getExistingActivity(title) {
+  const supabase = createClient(); // Supabase 인스턴스를 함수 내부에서 생성
   try {
     const { data, error } = await supabase
       .from('activities')
@@ -97,6 +96,7 @@ async function getExistingActivity(title) {
 
 // 데이터 비교 및 업데이트 함수
 async function upsertActivity(activity) {
+  const supabase = createClient(); // Supabase 인스턴스를 함수 내부에서 생성
   try {
     const existingActivity = await getExistingActivity(activity.title);
 
@@ -122,7 +122,6 @@ async function upsertActivity(activity) {
 }
 
 // 메인 크롤링 함수
-
 export async function crawlActivities() {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
